@@ -1,5 +1,5 @@
 [workspace]
 members = [
-    "smelter",
+    "smelter-ui",
     "smelter-webapp",
 ]

@@ -7,7 +7,7 @@ pub fn run() -> Result<(), JsValue> {
     let body = document.body().expect("document should have a body");
 
     let val = document.create_element("p")?;
-    val.set_text_content(Some("Hello from Rust!"));
+    val.set_text_content(Some("Hello from Rust!!!"));
 
     body.append_child(&val)?;
 
