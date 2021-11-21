@@ -18,7 +18,7 @@ npm -v
 
 Execute npm install.
 ```
-cd <project-dir>
+cd <repository-dir>/smelter-webapp
 npm install
 ```
 
