@@ -11,7 +11,7 @@ pub trait Publish {
     type Output;
 
     fn receive_subscriber(&self, subscriber: &Arc<Subscriber<Self::Output>>);
-    fn send_value(&self, v: Self::Output);
+    fn send_value(&self, v: &Self::Output);
 }
 
 pub struct Subscriber<T> {
@@ -26,10 +26,24 @@ impl<T> Subscriber<T> {
         Arc::new(subscriber)
     }
 
-    pub fn sink<F>(&self, f: F) where F: FnMut(&T), F: 'static {
+    pub fn sink<F>(&self, f: F) where F: Fn(&T), F: 'static {
         if let Ok(mut guard) = self.state.lock() {
             guard.sink(f);
         }
+    }
+
+    pub fn map<F, S>(&self, f: F) -> Arc<Subscriber<S>> where F: Fn(&T) -> S, F: 'static, T: 'static, S: 'static {
+        let subscriber = Subscriber::new();
+        let publisher = Publisher::new();
+        publisher.receive_subscriber(&subscriber);
+        let f = Box::new(f) as Box<dyn Fn(&T) -> S>;
+        self.sink(move |v| publisher.send_value(&f(v)));
+        subscriber
+    }
+
+    pub fn bind(self: &Arc<Self>, publisher: &Arc<Publisher<T>>) where T: 'static {
+        let publisher = Arc::clone(publisher);
+        self.sink(move |v| publisher.send_value(v));
     }
 }
 
@@ -53,7 +67,7 @@ impl<T> Subscribe for Subscriber<T> {
 
 struct SubscriberState<T> {
     v: PhantomData<T>,
-    sinks: Vec<Box<dyn FnMut(&T)>>,
+    sinks: Vec<Box<dyn Fn(&T)>>,
 }
 
 impl<T> SubscriberState<T> {
@@ -77,7 +91,7 @@ impl<T> SubscriberState<T> {
         Demand::unlimited()
     }
 
-    fn sink<F>(&mut self, f: F) where F: FnMut(&T), F: 'static {
+    fn sink<F>(&mut self, f: F) where F: Fn(&T), F: 'static {
         self.sinks.push(Box::new(f));
     }
 }
@@ -87,7 +101,7 @@ pub struct Publisher<T> {
 }
 
 impl<T> Publisher<T> {
-    fn new() -> Arc<Self> {
+    pub fn new() -> Arc<Self> {
         let publisher = Self {
             state: Mutex::new(PublisherState::new()),
         };
@@ -109,7 +123,7 @@ impl<T> Publish for Publisher<T> {
         }
     }
 
-    fn send_value(&self, v: Self::Output) {
+    fn send_value(&self, v: &Self::Output) {
         if let Ok(mut guard) = self.state.lock() {
             guard.send_value(v);
         }
@@ -141,12 +155,12 @@ impl<T> PublisherState<T> {
         subscriber.receive_subscription(subscription);
     }
 
-    fn send_value(&mut self, v: T) {
+    fn send_value(&mut self, v: &T) {
         let subscriptions: Vec<_> = self.subscriptions
             .iter()
             .cloned()
             .filter_map(|subscription| {
-                let demand = subscription.receive_value(&v);
+                let demand = subscription.receive_value(v);
                 demand
                     .consumed(0)
                     .map(|_| subscription)
@@ -203,26 +217,71 @@ impl<T> Subscription<T> {
 
 struct SubscriptionState<T> {
     demand: Demand,
-    subscriber: Weak<Subscriber<T>>,
+    subscriber: Arc<Subscriber<T>>,
 }
 
 impl<T> SubscriptionState<T> {
     pub fn new(subscriber: &Arc<Subscriber<T>>) -> Self {
         Self {
             demand: Demand::unlimited(),
-            subscriber: Arc::downgrade(&subscriber),
+            subscriber: Arc::clone(&subscriber),
         }
     }
 
     pub fn receive_value(&mut self, v: &T) -> Demand {
-        println!("receive_valuereceive_valuereceive_value");
-        if let Some(subscriber) = self.subscriber.upgrade() {
-            println!("1");
-            subscriber.receive_value(v)
-        } else {
-            println!("2");
-            Demand::nothing()
-        }
+        // TODO: use Weak if needed
+        // if let Some(subscriber) = self.subscriber.upgrade() {
+        //     subscriber.receive_value(v)
+        // } else {
+        //     Demand::nothing()
+        // }
+        self.subscriber.receive_value(v)
+    }
+}
+
+pub struct Property<T> where T: Clone, T: 'static {
+    publisher: Arc<Publisher<T>>,
+    subscriber: Arc<Subscriber<T>>,
+    value: Arc<Mutex<T>>,
+}
+
+impl<T> Property<T> where T: Clone, T: 'static {
+    pub fn new(value: T) -> Arc<Self> {
+        // TODO: hot observable
+        let publisher: Arc<Publisher<T>> = Publisher::new();
+        let subscriber: Arc<Subscriber<T>> = Subscriber::new();
+        publisher.receive_subscriber(&subscriber);
+        let value = Arc::new(Mutex::new(value));
+        let value_ref = Arc::clone(&value);
+        subscriber.sink(move |v| {
+            if let Ok(mut guard) = value_ref.lock() {
+                *guard = v.clone(); 
+            } 
+        });
+        let property = Self {
+            publisher,
+            subscriber,
+            value: value,
+        };
+        Arc::new(property)
+    }
+
+    pub fn publisher(&self) -> &Arc<Publisher<T>> {
+        &self.publisher
+    }
+
+    pub fn subscriber(&self) -> &Arc<Subscriber<T>> {
+        &self.subscriber
+    }
+
+    pub fn accept(&self, v: &T) {
+        self.publisher.send_value(&v)
+    }
+
+    pub fn value(&self) -> Option<T> {
+        self.value.lock()
+            .ok()
+            .map(|v| v.clone())
     }
 }
 
@@ -239,7 +298,7 @@ mod tests {
         subscriber
             .sink(move |v| *r.lock().unwrap() = *v);
         publisher.receive_subscriber(&subscriber);
-        publisher.send_value(100);
+        publisher.send_value(&100);
         assert_eq!(*x.lock().unwrap(), 100);
     }
 }
