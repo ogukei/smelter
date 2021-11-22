@@ -215,12 +215,9 @@ impl<T> SubscriptionState<T> {
     }
 
     pub fn receive_value(&mut self, v: &T) -> Demand {
-        println!("receive_valuereceive_valuereceive_value");
         if let Some(subscriber) = self.subscriber.upgrade() {
-            println!("1");
             subscriber.receive_value(v)
         } else {
-            println!("2");
             Demand::nothing()
         }
     }
