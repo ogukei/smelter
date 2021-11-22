@@ -15,6 +15,9 @@ pub use crate::builder::*;
 mod manipulation;
 pub use crate::manipulation::*; 
 
+mod proto;
+pub use crate::proto::*;
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -24,7 +27,9 @@ mod tests {
         let mut builder = DocumentBuilder::new();
         let context = &mut builder;
         Element::new(context).children(|context| {
-            Element::new(context).children(|_| {
+            Element::new(context);
+            Element::new(context).children(|context| {
+                Element::new(context);
             });
         });
         let document = builder.build();

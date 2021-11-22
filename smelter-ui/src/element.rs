@@ -1,17 +1,22 @@
 use std::{borrow::BorrowMut, sync::{Arc, Mutex}};
 
+use smelter_reflux::{Property, Publisher, Subscriber};
+
 pub enum DOMElementType {
     Div,
+    Button,
 }
 
 pub struct DOMElement {
+    element_type: DOMElementType,
     pub(crate) state: Mutex<DOMElementState>,
 }
 
 impl DOMElement {
-    pub(crate) fn new(tp: DOMElementType) -> Arc<Self> {
-        let state = DOMElementState::new();
+    pub(crate) fn new(element_type: DOMElementType) -> Arc<Self> {
+        let state = DOMElementState::new(&element_type);
         let element = Self {
+            element_type,
             state: Mutex::new(state),
         };
         Arc::new(element)
@@ -23,10 +28,30 @@ impl DOMElement {
             state.push_child(element);
         }
     }
+
+    pub(crate) fn element_type(&self) -> &DOMElementType {
+        &self.element_type
+    }
+
+    pub(crate) fn text_property(&self) -> Option<Arc<Property<Option<String>>>> {
+        self.state.lock()
+            .ok()
+            .map(|v| v.text_property().clone())
+            .flatten()
+    }
+
+    pub(crate) fn onclick_publisher(&self) -> Option<Arc<Publisher<()>>> {
+        self.state.lock()
+            .ok()
+            .map(|v| v.onclick_publisher().clone())
+            .flatten()
+    }
 }
 
 pub struct DOMElementState {
     pub(crate) children: Vec<Arc<DOMElement>>,
+    pub(crate) text_property: Option<Arc<Property<Option<String>>>>,
+    pub(crate) onclick_publisher: Option<Arc<Publisher<()>>>,
 }
 
 impl DOMElementState {
@@ -36,7 +61,35 @@ impl DOMElementState {
 }
 
 impl DOMElementState {
-    fn new() -> Self {
-        Self { children: vec![] }
+    fn new(tp: &DOMElementType) -> Self {
+        Self {
+            children: vec![],
+            text_property: tp.has_text().then(|| Property::new(None)),
+            onclick_publisher: tp.has_onclick().then(|| Publisher::new())
+        }
+    }
+
+    fn text_property(&self) -> &Option<Arc<Property<Option<String>>>> {
+        &self.text_property
+    }
+
+    fn onclick_publisher(&self) -> &Option<Arc<Publisher<()>>> {
+        &self.onclick_publisher
+    }
+}
+
+impl DOMElementType {
+    fn has_text(&self) -> bool {
+        match &self {
+            &DOMElementType::Div => true,
+            &DOMElementType::Button => true,
+        }
+    }
+
+    fn has_onclick(&self) -> bool {
+        match &self {
+            &DOMElementType::Div => false,
+            &DOMElementType::Button => true,
+        }
     }
 }

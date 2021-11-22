@@ -2,17 +2,21 @@ use std::{borrow::BorrowMut, sync::{Arc, Mutex}};
 
 use crate::{DOMElement, DOMContext, DOMElementType};
 
-pub trait Visit {
+pub trait DeclareElement {
     type Context;
 
     fn context_mut(&mut self) -> &mut Self::Context;
     fn element(&self) -> &Arc<DOMElement>;
 }
 
-pub trait Manipulate {
+pub trait DeclareTraverse {
     type Context;
 
-    fn children<F>(self, f: F) -> Self where F: Fn(&mut Self::Context);
+    fn children<F>(self, f: F) -> Self where F: FnOnce(&mut Self::Context);
+}
+
+pub trait DeclareTextManipulate {
+    fn text<S>(self, text: S) -> Self where S: Into<String>;
 }
 
 pub struct Element<'a, Ctx> {
@@ -27,20 +31,7 @@ impl<'a, Ctx> Element<'a, Ctx> where Ctx: DOMContext {
     }
 }
 
-impl<T, Ctx> Manipulate for T where T: Visit<Context = Ctx>, Ctx: DOMContext {
-    type Context = Ctx;
-
-    fn children<F>(mut self, f: F) -> Self where F: Fn(&mut Self::Context) {
-        let element = Arc::clone(self.element());
-        let context = self.context_mut();
-        context.enter_children(&element);
-        f(context);
-        context.leave_children(&element);
-        self
-    }
-}
-
-impl<'a, Ctx> Visit for Element<'a, Ctx> where Ctx: DOMContext {
+impl<'a, Ctx> DeclareElement for Element<'a, Ctx> where Ctx: DOMContext {
     type Context = Ctx;
 
     fn context_mut(&mut self) -> &mut Self::Context {
@@ -49,5 +40,18 @@ impl<'a, Ctx> Visit for Element<'a, Ctx> where Ctx: DOMContext {
 
     fn element(&self) -> &Arc<DOMElement> {
         &self.element
+    }
+}
+
+impl<T, Ctx> DeclareTraverse for T where T: DeclareElement<Context = Ctx>, Ctx: DOMContext {
+    type Context = Ctx;
+
+    fn children<F>(mut self, f: F) -> Self where F: FnOnce(&mut Self::Context) {
+        let element = Arc::clone(self.element());
+        let context = self.context_mut();
+        context.enter_children(&element);
+        f(context);
+        context.leave_children(&element);
+        self
     }
 }
