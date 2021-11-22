@@ -93,6 +93,7 @@ impl DOMElementType {
         match &self {
             &DOMElementType::Div => "div".into(),
             &DOMElementType::Button => "button".into(),
+            &DOMElementType::Paragraph => "p".into(),
         }
     }
 }
@@ -103,6 +104,12 @@ struct DOMElementInstanceBinding {
 
 impl DOMElementInstanceBinding {
     fn new(reference: &Arc<DOMElement>, element: &web_sys::HtmlElement) -> Self {
+        // styles
+        if let Some(styles) = reference.styles() {
+            for (key, value) in styles.iter() {
+                element.style().set_property(key.as_str(), value.as_str());
+            }
+        }
         // onclick
         if let Some(onclick_publisher) = reference.onclick_publisher() {
             let onclick = Closure::wrap(Box::new(move || {

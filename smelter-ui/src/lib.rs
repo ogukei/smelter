@@ -6,8 +6,8 @@ pub use crate::element::*;
 mod document;
 pub use crate::document::*;
 
-mod declare;
-pub use crate::declare::*;
+mod proto;
+pub use crate::proto::*;
 
 mod builder;
 pub use crate::builder::*;
@@ -15,8 +15,6 @@ pub use crate::builder::*;
 mod manipulation;
 pub use crate::manipulation::*; 
 
-mod proto;
-pub use crate::proto::*;
 
 #[cfg(test)]
 mod tests {
@@ -26,10 +24,10 @@ mod tests {
     fn it_works() {
         let mut builder = DocumentBuilder::new();
         let context = &mut builder;
-        Element::new(context).children(|context| {
-            Element::new(context);
-            Element::new(context).children(|context| {
-                Element::new(context);
+        Division::new(context).children(|context| {
+            Division::new(context);
+            Division::new(context).children(|context| {
+                Division::new(context);
             });
         });
         let document = builder.build();
