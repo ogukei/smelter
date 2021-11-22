@@ -2,6 +2,28 @@
 
 Simple web app interface builder in Rust.
 
+```rust
+let mut builder = DocumentBuilder::new();
+let context = &mut builder;
+Division::new(context).children(|context| {
+    Paragraph::new(context)
+        .text("Smelter");
+    Division::new(context).children(|context| {
+        Button::new(context)
+            .text("Hello world!");
+    });
+});
+let document = builder.build();
+/*
+<div>
+  <p>Smelter</p>
+  <div>
+    <button>Hello world!</button>
+  </div>
+</div>
+*/
+```
+
 The repository contains some Cargo workspace members. `smelter-ui` contains the core functionality. `smelter-reflux` is a Combine-like declarative event processing library. `smelter-webapp` is an example app that runs on web-sys with Webpack 5.
 
 ## Setup
