@@ -24,6 +24,10 @@ pub trait DeclareTextManipulate {
     fn subscribe_text(self, publisher: &Arc<Publisher<Option<String>>>) -> Self;
 }
 
+pub trait DeclareStyleManipulate {
+    fn style<S0, S1>(self, key: S0, value: S1) -> Self where S0: Into<String>, S1: Into<String>;
+}
+
 impl<T, Ctx> DeclareTraverse for T where T: DeclareElement<Context = Ctx>, Ctx: DOMContext {
     type Context = Ctx;
 
@@ -59,6 +63,14 @@ impl<T, Ctx> DeclareTextManipulate for T where T: DeclareElement<Context = Ctx>,
         if let Some(text_property) = element.text_property() {
             publisher.receive_subscriber(text_property.subscriber())
         }
+        self
+    }
+}
+
+impl<T, Ctx> DeclareStyleManipulate for T where T: DeclareElement<Context = Ctx>, Ctx: DOMContext {
+    fn style<S0, S1>(self, key: S0, value: S1) -> Self where S0: Into<String>, S1: Into<String> {
+        let element = self.element();
+        element.push_style(key.into(), value.into());
         self
     }
 }

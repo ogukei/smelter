@@ -13,6 +13,7 @@ pub fn run() -> Result<(), JsValue> {
         let text_content = Publisher::new();
         Paragraph::new(context)
             .text("Smelter")
+            .style("font-size", "32pt")
             .subscribe_text(&text_content);
         Division::new(context).children(|context| {
             let onclick = Subscriber::new();
@@ -21,6 +22,7 @@ pub fn run() -> Result<(), JsValue> {
                 .bind(&text_content);
             Button::new(context)
                 .text("Hello world!")
+                .style("font-size", "12pt")
                 .publish_onclick(&onclick);
         });
     });

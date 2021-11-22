@@ -16,4 +16,5 @@ features = [
   'Node',
   'Window',
   'console',
+  'CssStyleDeclaration',
 ]
