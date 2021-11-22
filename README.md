@@ -2,7 +2,7 @@
 
 Simple web app interface builder in Rust.
 
-`smelter-ui` contains the core functionality. `smelter-webapp` is an example app that runs on web-sys with Webpack 5.
+The repository contains some Cargo workspace members. `smelter-ui` contains the core functionality. `smelter-reflux` is a Combine-like declarative event processing library. `smelter-webapp` is an example app that runs on web-sys with Webpack 5.
 
 ## Setup
 
