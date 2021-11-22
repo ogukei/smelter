@@ -2,9 +2,11 @@
 
 Simple web app interface builder in Rust.
 
+`smelter-ui` contains the core functionality. `smelter-webapp` is an example app that runs on web-sys with Webpack 5.
+
 ## Setup
 
-Install the latest npm using n on Ubuntu 20.04 LTS.
+Install the latest npm using n on Ubuntu 20.04 LTS. Skip this step if you have already installed npm.
 
 ```
 sudo apt install nodejs npm

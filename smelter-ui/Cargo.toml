@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 wasm-bindgen = "0.2.74"
+smelter-reflux = { version = "0.1.0", path = "../smelter-reflux" }
 
 [dependencies.web-sys]
 version = "0.3.4"
