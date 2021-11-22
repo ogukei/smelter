@@ -93,6 +93,7 @@ impl DOMElementType {
         match &self {
             &DOMElementType::Div => "div".into(),
             &DOMElementType::Button => "button".into(),
+            &DOMElementType::Paragraph => "p".into(),
         }
     }
 }

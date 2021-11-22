@@ -5,6 +5,7 @@ use smelter_reflux::{Property, Publisher, Subscriber};
 pub enum DOMElementType {
     Div,
     Button,
+    Paragraph,
 }
 
 pub struct DOMElement {
@@ -83,13 +84,15 @@ impl DOMElementType {
         match &self {
             &DOMElementType::Div => true,
             &DOMElementType::Button => true,
+            &DOMElementType::Paragraph => true,
         }
     }
 
     fn has_onclick(&self) -> bool {
         match &self {
-            &DOMElementType::Div => false,
+            &DOMElementType::Div => true,
             &DOMElementType::Button => true,
+            &DOMElementType::Paragraph => true,
         }
     }
 }
