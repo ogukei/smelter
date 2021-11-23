@@ -2,6 +2,8 @@
 
 Simple web app interface builder in Rust.
 
+[DEMO](https://ogukei.github.io/smelter/index.html)
+
 ```rust
 let mut builder = DocumentBuilder::new();
 let context = &mut builder;
