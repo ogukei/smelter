@@ -14,13 +14,16 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: '16'
-      - run: cd smelter-webapp
-      - run: npm install
-      - run: npm run build
+
+      - name : Build
+        run: |
+          cd smelter-webapp
+          npm install
+          npm run build
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         if: ${{ github.ref == 'refs/heads/main' }}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          publish_dir: ./smelter-webapp/dist
