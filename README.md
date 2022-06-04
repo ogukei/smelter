@@ -48,6 +48,8 @@ cd <repository-dir>/smelter-webapp
 npm install
 ```
 
+Install wasm-pack via https://rustwasm.github.io/wasm-pack/
+
 ## Build
 
 ```
